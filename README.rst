@@ -7,7 +7,7 @@ be done with a minion swarm.
 
 Legion works by telling a minion to just pretend to be many more minions,
 it is simple in that the minion still runs the remote execution command
-that is sent to it, it just then sends returns forf multiple minions back
+that is sent to it, it just then sends returns for multiple minions back
 to the master.
 
 Setup
@@ -39,7 +39,7 @@ Then activate the caches:
 salt \* legion.cache
 
 It will take a while to populate the keys and cache as it is serial and makes
-the master do a pillar generation for each minion. watch the master log
+the master do a pillar generation for each minion. Watch the master log
 for the storm to pass. But when it is done you can run salt commands to your
 heart's delight and get tons of returns:
 
