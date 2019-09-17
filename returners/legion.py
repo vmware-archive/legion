@@ -25,22 +25,10 @@ def returner(ret):
                 'retcode': 0,
                 'success': True,
                 }
-        log.debug('Sending return for {}'.format(id_))
         if __opts__['minion_sign_messages']:
             log.trace('Signing event to be published onto the bus.')
             minion_privkey_path = os.path.join(__opts__['pki_dir'], 'minion.pem')
             sig = salt.crypt.sign_message(minion_privkey_path, salt.serializers.msgpack.serialize(load))
             load['sig'] = sig
         master_ret = channel.send(load, timeout=30)
-        log.error(master_ret)
     channel.close()
-
-
-
-
-#[ERROR   ] Calling returen for {'fun_args': [], 'jid': '20190917104603038902', 'return': True, 'retcode': 0, 'success': True, 'cmd': '_return', 'fun': 'test.ping', 'id': 'ragnarok'}
-#[ERROR   ] Storing job info for ragnarok
-#[ERROR   ] Job info stored for ragnarok
-#[ERROR   ] {'load': {'tgt_type': None, 'load': None, 'jid': '20190917104603038902', 'tgt': None, 'cmd': '_return', 'arg': None, 'fun': 'test.ping', 'id': 'ragnarok_0'}, 'enc': 'aes'}
-#[ERROR   ] Calling returen for {'tgt_type': None, 'load': None, 'jid': '20190917104603038902', 'tgt': None, 'cmd': '_return', 'arg': None, 'fun': 'test.ping', 'id': 'ragnarok_0'}
-#

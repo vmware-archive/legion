@@ -88,9 +88,6 @@ def keys():
                 timeout=30,
             )
     except SaltReqTimeoutError as e:
-        if safe:
-            log.warning('SaltReqTimeoutError: %s', e)
-            return 'retry'
         raise SaltClientError('Attempt to authenticate with the salt master failed with timeout error')
     finally:
         channel.close()
