@@ -10,6 +10,7 @@ log = logging.getLogger(__name__)
 
 
 def returner(ret):
+    log.error(ret)
     if ret['fun'].startswith('legion'):
         return
     channel = salt.transport.client.ReqChannel.factory(__opts__)
@@ -18,12 +19,12 @@ def returner(ret):
         load = {
                 'cmd': '_return',
                 'id': id_,
-                'jid': ret['jid'],
-                'fun': ret['fun'],
-                'fun_args': ret.get('arg', []),
-                'return': True,
-                'retcode': 0,
-                'success': True,
+                'jid': ret[u'jid'],
+                'fun': ret[u'fun'],
+                'fun_args': ret.get(u'fun_args', []),
+                'return': ret[u'return'],
+                'retcode': ret[u'retcode'],
+                'success': ret[u'success'],
                 }
         if __opts__['minion_sign_messages']:
             log.trace('Signing event to be published onto the bus.')
