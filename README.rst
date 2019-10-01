@@ -10,10 +10,31 @@ it is simple in that the minion still runs the remote execution command
 that is sent to it, it just then sends returns for multiple minions back
 to the master.
 
-Setup
-=====
+Legion can be used in combination with minionswarm for a double punch of
+scale.
 
-This repo contains a returer and an execution module. Just activate those
+Keep in mind that Legion will create a dedicated thundering herd issue.
+Since Legion can spoof literally hundreds of thousands of minions on a
+single system it can seriously bog down a Salt Master. Make sure that you
+are patient starting things up and give your master the time to process
+the heavy load.
+
+Run With MinionSwarm
+====================
+
+This repo comes with a minionswarm.py script. This script will run a swarm
+or minions, with each member of the swarm running a number of fakes, just
+clone the repo and run:
+
+python3 minionswarm.py --help
+
+To see all the flags so you can create hordes of minions to test against
+with varied grains, versions, and OSes etc.
+
+Setup Dedicated
+===============
+
+This repo contains a returner and an execution module. Just activate those
 however you want ON THE MINION (I just copy them into the running directory):
 
 cp returners/legion.py /usr/lib/python3.7/site-packages/returners/
