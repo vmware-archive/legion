@@ -22,11 +22,11 @@ the heavy load.
 Run With MinionSwarm
 ====================
 
-This repo comes with a minionswarm.py script. This script will run a swarm
+This repo comes with a legion.py script. This script will run a swarm
 or minions, with each member of the swarm running a number of fakes, just
 clone the repo and run:
 
-python3 minionswarm.py --help
+python3 legion/legion.py --help
 
 To see all the flags so you can create hordes of minions to test against
 with varied grains, versions, and OSes etc.
@@ -37,8 +37,8 @@ Setup Dedicated
 This repo contains a returner and an execution module. Just activate those
 however you want ON THE MINION (I just copy them into the running directory):
 
-cp returners/legion.py /usr/lib/python3.7/site-packages/returners/
-cp modules/legion.py /usr/lib/python3.7/site-packages/modules/
+cp legion/returners/legion.py /usr/lib/python3.7/site-packages/returners/
+cp legion/modules/legion.py /usr/lib/python3.7/site-packages/modules/
 
 Now that those modules are in place open up the minion config and turn
 it all on:

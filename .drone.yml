@@ -1,0 +1,69 @@
+---
+kind: pipeline
+name: build
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: sdist
+  image: python:3.7
+  commands:
+  - python setup.py sdist
+
+- name: wheel
+  image: python:3.7
+  commands:
+  - python setup.py bdist_wheel
+
+- name: publish to artifactory
+  image: python:3.7
+  commands:
+  - pip install twine
+  - "twine upload dist/*"
+  environment:
+    TWINE_PASSWORD:
+      from_secret: artifactory_password
+    TWINE_REPOSITORY_URL: https://artifactory.saltstack.net/artifactory/api/pypi/pypi-local/
+    TWINE_USERNAME:
+      from_secret: artifactory_username
+
+trigger:
+  event:
+  - push
+  - tag
+
+---
+kind: secret
+name: nexus_username
+
+get:
+  path: nexus
+  name: username
+
+---
+kind: secret
+name: nexus_password
+
+get:
+  path: nexus
+  name: password
+
+---
+kind: secret
+name: artifactory_username
+
+get:
+  path: artifactory-deployer
+  name: username
+
+---
+kind: secret
+name: artifactory_password
+
+get:
+  path: artifactory-deployer
+  name: password
+
+...
