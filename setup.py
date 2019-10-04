@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="legion",
-    version="1.0.1",
+    version="1.0.2",
     packages=[
         "legion",
         "legion/modules",
