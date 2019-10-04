@@ -179,11 +179,6 @@ def parse():
         help=('Pass in a configuration directory containing base configuration.')
         )
     parser.add_option('-u', '--user', default=this_user())
-    parser.add_option(
-        '--gen-config',
-        action='store_true',
-        help='print a config file that can be used with salt-master'
-    )
 
     options, _args = parser.parse_args()
 
@@ -193,18 +188,6 @@ def parse():
         opts[key] = val
 
     return opts
-
-
-def print_config():
-    base_module_path = os.path.dirname(__file__)
-
-    config = dict(
-        extension_modules=[base_module_path],
-    )
-
-    salt.utils.yaml.dump(config,
-                         sys.stdout,
-                         default_flow_style=False)
 
 
 class Swarm(object):
@@ -498,13 +481,8 @@ class MasterSwarm(Swarm):
 
 
 def main():
-    opts = parse()
+    swarm = Swarm(parse())
 
-    if opts.get("gen_config", False):
-        print_config()
-        exit(0)
-
-    swarm = Swarm(opts)
     try:
         swarm.start()
     finally:
