@@ -19,16 +19,19 @@ import shutil
 import sys
 import hashlib
 import uuid
+import multiprocessing
 
 from shutil import copyfile
 
 # Import salt libs
 import salt
+import salt.config
 import salt.modules
 import salt.returners
 import salt.utils.files
 import salt.utils.platform
 import salt.utils.yaml
+import salt.utils.event
 
 # Import third party libs
 from salt.ext import six
@@ -55,6 +58,28 @@ VERS = [
         '2015.5.5',
         '2015.8.0',
         ]
+
+
+def event_listener(accepted_minions, cached_ret):
+    opts = salt.config.client_config('/etc/salt/master')
+    event = salt.utils.event.get_event(
+            'master',
+            sock_dir=opts['sock_dir'],
+            transport=opts['transport'],
+            opts=opts)
+
+    while 1:
+        data = event.get_event()
+        if data:
+            if 'act' in data:
+                mid = data['id']
+                if mid not in accepted_minions:
+                    accepted_minions[mid] = True
+
+            elif 'return' in data and 'fun' in data and data['fun'] == 'legion.cache':
+                mid = data['id']
+                if mid not in cached_ret:
+                    cached_ret[mid] = True
 
 
 def this_user():
@@ -171,7 +196,7 @@ def parse():
     parser.add_option(
         '--legion-start-delay',
         dest='legion_start_delay',
-        default=30.0,
+        default=5.0,
         type='float',
         help='Seconds to wait to issue legion commands')
     parser.add_option(
@@ -194,8 +219,10 @@ class Swarm(object):
     '''
     Create a swarm of minions
     '''
-    def __init__(self, opts):
+    def __init__(self, opts, accepted_minions, cached_ret):
         self.opts = opts
+        self.accepted_minions = accepted_minions
+        self.cached_ret = cached_ret
 
         # If given a temp_dir, use it for temporary files
         if opts['temp_dir']:
@@ -244,7 +271,7 @@ class Swarm(object):
         if self.opts['master_too']:
             master_swarm = MasterSwarm(self.opts)
             master_swarm.start()
-        minions = MinionSwarm(self.opts)
+        minions = MinionSwarm(self.opts, self.accepted_minions, self.cached_ret)
         minions.start_minions()
         print('Starting minions...')
         #self.start_minions()
@@ -307,19 +334,19 @@ class MinionSwarm(Swarm):
         '''
         Iterate over the config files and start up the minions
         '''
-        if self.opts['legion']:
-            mydir = os.path.dirname(__file__)
-            returner = os.path.join(mydir, 'returners', 'legion.py')
-            returner_dst = os.path.join(os.path.dirname(salt.returners.__file__), 'legion.py')
+        # if self.opts['legion']:
+        #     mydir = os.path.dirname(__file__)
+        #     returner = os.path.join(mydir, 'returners', 'legion.py')
+        #     returner_dst = os.path.join(os.path.dirname(salt.returners.__file__), 'legion.py')
 
-            module = os.path.join(mydir, 'modules', 'legion.py')
-            module_dst = os.path.join(os.path.dirname(salt.modules.__file__), 'legion.py')
+        #     module = os.path.join(mydir, 'modules', 'legion.py')
+        #     module_dst = os.path.join(os.path.dirname(salt.modules.__file__), 'legion.py')
 
-            copyfile(returner, returner_dst)
-            copyfile(module, module_dst)
+        #     copyfile(returner, returner_dst)
+        #     copyfile(module, module_dst)
 
         self.prep_configs()
-        for path in self.confs:
+        for i, path in enumerate(self.confs):
             cmd = 'salt-minion -c {0} --pid-file {1}'.format(
                     path,
                     '{0}.pid'.format(path)
@@ -329,13 +356,31 @@ class MinionSwarm(Swarm):
             else:
                 cmd += ' -d &'
             subprocess.call(cmd, shell=True)
+            minion = self.minions[i]
+            self.wait_for(minion)
             time.sleep(self.opts['start_delay'])
 
-        if self.opts['legion']:
-            time.sleep(self.opts['legion_start_delay'])
-            minions = ','.join(self.minions)
-            subprocess.call("salt -L '{}' legion.keys".format(minions), shell=True)
-            subprocess.call("salt -L '{}' legion.cache".format(minions), shell=True)
+            if self.opts['legion']:
+                subprocess.call("salt '{}' legion.keys".format(minion), shell=True)
+                minions = ['{}_{}'.format(minion, m) for m in range(self.opts['legion'])]
+                self.wait_for(*minions)
+                subprocess.call("salt '{}' legion.cache".format(minion), shell=True)
+                self.wait_for(minion, attr='cached_ret')
+                time.sleep(self.opts['legion_start_delay'])
+
+    def wait_for(self, *minions, attr='accepted_minions'):
+        count = 0
+        print('Waiting for {}:'.format(attr), minions, end=' ... ')
+        while 1:
+            for m in minions:
+                if m in getattr(self, attr):
+                    count += 1
+
+            if count >= len(minions):
+                print('✓')
+                return
+
+            time.sleep(2)
 
     def mkconf(self, idx):
         '''
@@ -481,12 +526,21 @@ class MasterSwarm(Swarm):
 
 
 def main():
-    swarm = Swarm(parse())
+    with multiprocessing.Manager() as manager:
+        accepted_minions = manager.dict()
+        cached = manager.dict()
+        event_busser = multiprocessing.Process(
+            target=event_listener,
+            args=(accepted_minions, cached),
+            daemon=True
+        )
+        event_busser.start()
 
-    try:
-        swarm.start()
-    finally:
-        swarm.shutdown()
+        swarm = Swarm(parse(), accepted_minions, cached)
+        try:
+            swarm.start()
+        finally:
+            swarm.shutdown()
 
 
 # pylint: disable=C0103
