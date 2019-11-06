@@ -37,7 +37,7 @@ Start with 5 minion processes each with 10 legions
 To see all the flags so you can create hordes of minions to test against
 with varied grains, versions, and OSes etc.
 
-Setup Dedicated
+Dedicated Setup
 ===============
 
 Turn on legion in your master config:
