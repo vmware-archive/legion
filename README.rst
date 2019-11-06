@@ -42,9 +42,9 @@ Setup Dedicated
 
 Turn on legion:
 
-.. code:: yaml
-  legion_fakes: 100
-  return: legion
+.. code-block:: yaml
+   legion_fakes: 100
+   return: legion
 
 Next run a couple of remote ex commands to tell the minion to use legion
 to make fake keys and caches:
