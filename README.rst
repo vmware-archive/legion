@@ -43,6 +43,7 @@ Setup Dedicated
 Turn on legion:
 
 .. code-block:: yaml
+
    legion_fakes: 100
    return: legion
 
