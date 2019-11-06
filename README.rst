@@ -40,7 +40,7 @@ with varied grains, versions, and OSes etc.
 Setup Dedicated
 ===============
 
-Turn on legion:
+Turn on legion in your master config:
 
 .. code-block:: yaml
 
