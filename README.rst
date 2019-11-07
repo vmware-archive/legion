@@ -19,49 +19,50 @@ single system it can seriously bog down a Salt Master. Make sure that you
 are patient starting things up and give your master the time to process
 the heavy load.
 
-Run With MinionSwarm
-====================
+Installation
+============
 
-This repo comes with a legion.py script. This script will run a swarm
-or minions, with each member of the swarm running a number of fakes, just
-clone the repo and run:
+``pip install -e .``
 
-python3 legion/legion.py --help
+Usage
+=====
+
+It is recommended to use with a local master and ``auto_accept: True``.
+Otherwise, you'll have to manually accept loads of keys as the hoard starts.
+
+Start with 5 minion processes each with 10 legions
+
+``legion -m 5 -l 10``
 
 To see all the flags so you can create hordes of minions to test against
 with varied grains, versions, and OSes etc.
 
-Setup Dedicated
+Dedicated Setup
 ===============
 
-This repo contains a returner and an execution module. Just activate those
-however you want ON THE MINION (I just copy them into the running directory):
+Turn on legion in your master config:
 
-cp legion/returners/legion.py /usr/lib/python3.7/site-packages/returners/
-cp legion/modules/legion.py /usr/lib/python3.7/site-packages/modules/
+.. code-block:: yaml
 
-Now that those modules are in place open up the minion config and turn
-it all on:
-
-legion_fakes: 100
-return: legion
+   legion_fakes: 100
+   return: legion
 
 Next run a couple of remote ex commands to tell the minion to use legion
 to make fake keys and caches:
 
-salt \* legion.keys
+``salt \* legion.keys``
 
 Then on the master (unless you turn on open_mode):
 
-salt-key -A
+``salt-key -A``
 
 Then activate the caches:
 
-salt \* legion.cache
+``salt \* legion.cache``
 
 It will take a while to populate the keys and cache as it is serial and makes
 the master do a pillar generation for each minion. Watch the master log
 for the storm to pass. But when it is done you can run salt commands to your
 heart's delight and get tons of returns:
 
-salt \* network.interfaces
+``salt \* network.interfaces``
