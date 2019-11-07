@@ -198,7 +198,7 @@ def parse():
     parser.add_option(
         '--legion-start-delay',
         dest='legion_start_delay',
-        default=5.0,
+        default=0.0,
         type='float',
         help='Seconds to wait to issue legion commands')
     parser.add_option(
