@@ -81,6 +81,8 @@ def event_listener(accepted_minions, cached_ret):
                 if mid not in cached_ret:
                     cached_ret[mid] = True
 
+        time.sleep(0.1)
+
 
 def this_user():
     '''
@@ -241,7 +243,7 @@ class Swarm(object):
             self.pki = self._pki_dir()
         self.zfill = len(str(self.opts['minions']))
 
-        self.confs = set()
+        self.confs = []
         self.minions = []
 
         random.seed(0)
@@ -269,12 +271,14 @@ class Swarm(object):
         Start the magic!!
         '''
         if self.opts['master_too']:
+            print('Starting master...')
             master_swarm = MasterSwarm(self.opts)
             master_swarm.start()
+
+        print('Starting minions...')
         minions = MinionSwarm(self.opts, self.accepted_minions, self.cached_ret)
         minions.start_minions()
-        print('Starting minions...')
-        #self.start_minions()
+
         print('All {0} minions have started.'.format(self.opts['minions']))
         print('Waiting for CTRL-C to properly shutdown minions...')
         while True:
@@ -309,7 +313,8 @@ class Swarm(object):
         '''
         Clean up the config files
         '''
-        for path in self.confs:
+        for conf in self.confs:
+            path = conf['path']
             pidfile = '{0}.pid'.format(path)
             try:
                 try:
@@ -346,7 +351,8 @@ class MinionSwarm(Swarm):
         #     copyfile(module, module_dst)
 
         self.prep_configs()
-        for i, path in enumerate(self.confs):
+        for conf in self.confs:
+            path = conf['path']
             cmd = 'salt-minion -c {0} --pid-file {1}'.format(
                     path,
                     '{0}.pid'.format(path)
@@ -356,7 +362,7 @@ class MinionSwarm(Swarm):
             else:
                 cmd += ' -d &'
             subprocess.call(cmd, shell=True)
-            minion = self.minions[i]
+            minion = conf['id']
             self.wait_for(minion)
             time.sleep(self.opts['start_delay'])
 
@@ -451,7 +457,7 @@ class MinionSwarm(Swarm):
 
         with salt.utils.files.fopen(path, 'w+') as fp_:
             salt.utils.yaml.safe_dump(data, fp_)
-        self.confs.add(dpath)
+        self.confs.append({'path': dpath, 'id': minion_id})
 
     def prep_configs(self):
         '''
