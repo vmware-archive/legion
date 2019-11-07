@@ -41,7 +41,7 @@ Recommendations
 ===============
 
 - Set your master to ``auto_accept: True``
-- Clear you minion keys before restarting the legion: ``salt-key -D``
+- Clear your minion keys before restarting the legion: ``salt-key -D``
 - Legion was designed to do 5000 minions on one system. However, after 100
   legions per swarm minion, it falls apart. So it is recommended to get to
   5000 to do ``legion -m 46 -l 110``. Note: this takes about 25 minutes to
