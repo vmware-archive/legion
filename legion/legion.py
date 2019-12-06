@@ -369,12 +369,12 @@ class MinionSwarm(Swarm):
             if self.opts['legion']:
                 subprocess.call("salt '{}' legion.keys".format(minion), shell=True)
                 minions = ['{}_{}'.format(minion, m) for m in range(self.opts['legion'])]
-                self.wait_for(*minions)
+                self.wait_for(minions)
                 subprocess.call("salt '{}' legion.cache".format(minion), shell=True)
-                self.wait_for(minion, attr='cached_ret')
+                self.wait_for([minion], attr='cached_ret')
                 time.sleep(self.opts['legion_start_delay'])
 
-    def wait_for(self, *minions, attr='accepted_minions'):
+    def wait_for(self, minions, attr='accepted_minions'):
         count = 0
         print('Waiting for {}:'.format(attr), minions, end=' ... ')
         while 1:
