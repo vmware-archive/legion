@@ -51,7 +51,7 @@ Recommendations
 Dedicated Setup
 ===============
 
-Turn on legion in your master config:
+Turn on legion in your minion config:
 
 .. code-block:: yaml
 
