@@ -363,7 +363,7 @@ class MinionSwarm(Swarm):
                 cmd += ' -d &'
             subprocess.call(cmd, shell=True)
             minion = conf['id']
-            self.wait_for(minion)
+            self.wait_for([minion])
             time.sleep(self.opts['start_delay'])
 
             if self.opts['legion']:
