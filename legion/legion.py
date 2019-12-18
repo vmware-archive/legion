@@ -206,6 +206,13 @@ def parse():
         help=('Pass in a configuration directory containing base configuration.')
         )
     parser.add_option('-u', '--user', default=this_user())
+    parser.add_option('--run-modules',
+                      help=('Call legion.keys and legion.cache modules as minions start. '
+                            'This requires legion to be ran on the salt master that they '
+                            'are connecting to.'),
+                      dest='run_modules',
+                      action='store_true',
+                      default=False)
 
     options, _args = parser.parse_args()
 
@@ -228,7 +235,7 @@ class Swarm(object):
 
         # If given a temp_dir, use it for temporary files
         if opts['temp_dir']:
-            self.swarm_root = opts['temp_dir']
+            self.swarm_root = os.path.abspath(opts['temp_dir'])
         else:
             # If given a root_dir, keep the tmp files there as well
             if opts['root_dir']:
@@ -257,12 +264,14 @@ class Swarm(object):
             os.makedirs(path)
 
             print('Creating shared pki keys for the swarm on: {0}'.format(path))
-            subprocess.call(
-              'salt-key -c {0} --gen-keys minion --gen-keys-dir {0} '
-              '--log-file {1} --user {2}'.format(
-                  path, os.path.join(path, 'keys.log'), self.opts['user'],
-              ), shell=True
-            )
+
+            with open(os.devnull, 'w') as stdout:
+                subprocess.call(
+                  'salt-key -c {0} --gen-keys minion --gen-keys-dir {0} '
+                  '--log-file {1} --user {2}'.format(
+                      path, os.path.join(path, 'keys.log'), self.opts['user'],
+                  ), shell=True, stdout=stdout
+                )
             print('Keys generated')
         return path
 
@@ -294,16 +303,19 @@ class Swarm(object):
         Tear it all down
         '''
         print('Killing any remaining running minions')
-        subprocess.call(
-            'pkill -KILL -f "python.*salt-minion"',
-            shell=True
-        )
-        if self.opts['master_too']:
-            print('Killing any remaining masters')
+        with open(os.devnull, 'w') as stdout:
             subprocess.call(
-                    'pkill -KILL -f "python.*salt-master"',
-                    shell=True
+                'pkill -KILL -f "python.*salt-minion"',
+                shell=True,
+                stdout=stdout,
             )
+            if self.opts['master_too']:
+                print('Killing any remaining masters')
+                subprocess.call(
+                    'pkill -KILL -f "python.*salt-master"',
+                    shell=True,
+                    stdout=stdout,
+                )
         if not self.opts['no_clean']:
             print('Remove ALL related temp files/directories')
             shutil.rmtree(self.swarm_root)
@@ -361,18 +373,23 @@ class MinionSwarm(Swarm):
                 cmd += ' -l info &'
             else:
                 cmd += ' -d &'
-            subprocess.call(cmd, shell=True)
+            with open(os.devnull, 'w') as stdout:
+                if self.opts['foreground']:
+                    stdout = sys.stdout
+                subprocess.call(cmd, shell=True, stdout=stdout)
+
             minion = conf['id']
             self.wait_for([minion])
             time.sleep(self.opts['start_delay'])
 
-            if self.opts['legion']:
-                subprocess.call("salt '{}' legion.keys".format(minion), shell=True)
-                minions = ['{}_{}'.format(minion, m) for m in range(self.opts['legion'])]
-                self.wait_for(minions)
-                subprocess.call("salt '{}' legion.cache".format(minion), shell=True)
-                self.wait_for([minion], attr='cached_ret')
-                time.sleep(self.opts['legion_start_delay'])
+            if self.opts['legion'] and self.opts['run_modules']:
+                with open(os.devnull, 'w') as stdout:
+                    subprocess.call("salt '{}' legion.keys".format(minion), shell=True, stdout=stdout)
+                    minions = ['{}_{}'.format(minion, m) for m in range(self.opts['legion'])]
+                    self.wait_for(minions)
+                    subprocess.call("salt '{}' legion.cache".format(minion), shell=True, stdout=stdout)
+                    self.wait_for([minion], attr='cached_ret')
+                    time.sleep(self.opts['legion_start_delay'])
 
     def wait_for(self, minions, attr='accepted_minions'):
         count = 0
@@ -524,10 +541,12 @@ class MasterSwarm(Swarm):
 
     def shutdown(self):
         print('Killing master')
-        subprocess.call(
+        with open(os.devnull, 'w') as stdout:
+            subprocess.call(
                 'pkill -KILL -f "python.*salt-master"',
-                shell=True
-        )
+                shell=True,
+                stdout=stdout,
+            )
         print('Master killed')
 
 
