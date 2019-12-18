@@ -26,7 +26,7 @@ steps:
   image: python:3.7
   commands:
   - pip install twine
-  - "twine upload dist/*"
+  - twine upload dist/*
   environment:
     TWINE_PASSWORD:
       from_secret: artifactory_password
@@ -43,6 +43,7 @@ trigger:
   - pull_request
   - push
   - tag
+
 ---
 kind: pipeline
 name: docker
@@ -55,6 +56,7 @@ steps:
 - name: build
   image: plugins/docker
   settings:
+    auto_tag: true
     password:
       from_secret: artifactory_password
     registry: docker.artifactory.saltstack.net
