@@ -33,6 +33,29 @@ trigger:
   event:
   - push
   - tag
+---
+kind: pipeline
+name: docker
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build
+  image: plugins/docker
+  settings:
+    password:
+      from_secret: artifactory_password
+    registry: docker.artifactory.saltstack.net
+    repo: docker.artifactory.saltstack.net/salt-legion
+    username:
+      from_secret: artifactory_username
+
+trigger:
+  event:
+  - push
+  - tag
 
 ---
 kind: secret
