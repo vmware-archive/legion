@@ -556,9 +556,9 @@ def main():
         cached = manager.dict()
         event_busser = multiprocessing.Process(
             target=event_listener,
-            args=(accepted_minions, cached),
-            daemon=True
+            args=(accepted_minions, cached)
         )
+        event_busser.daemon = True
         event_busser.start()
 
         swarm = Swarm(parse(), accepted_minions, cached)
