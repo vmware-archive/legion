@@ -1,8 +1,9 @@
-FROM saltstack/salt:2019.2.2
+FROM saltstack/salt:3000
 
 RUN mkdir -p /opt/salt/legion
 WORKDIR /opt/salt/legion
 
 COPY . .
+RUN python3 -m pip install .
 
-ENTRYPOINT ["/usr/bin/python3", "/opt/salt/legion/legion/legion.py"]
+ENTRYPOINT ["/usr/bin/legion"]

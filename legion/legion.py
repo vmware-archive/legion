@@ -430,7 +430,9 @@ class MinionSwarm(Swarm):
             'cachedir': os.path.join(dpath, 'cache'),
             'master': self.opts['master'],
             'log_file': os.path.join(dpath, 'minion.log'),
-            'grains': {},
+            'grains': {
+                "legion": True,
+            },
         })
 
         if self.opts['legion']:
