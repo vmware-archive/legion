@@ -53,6 +53,11 @@ platform:
   arch: amd64
 
 steps:
+- name: fetch
+  image: docker:git
+  commands:
+  - git fetch --tags
+
 - name: build
   image: plugins/docker
   settings:
