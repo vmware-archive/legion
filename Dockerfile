@@ -7,4 +7,4 @@ WORKDIR /opt/salt/legion
 COPY . .
 RUN python3 -m pip install .
 
-ENTRYPOINT ["/usr/bin/legion"]
+ENTRYPOINT ["legion"]
