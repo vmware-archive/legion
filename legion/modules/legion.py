@@ -1,19 +1,13 @@
 # Import python libs
-import os
 import copy
+import os
 
-# Import salt libs
+import salt.crypt
 import salt.pillar
 import salt.transport.client
-import salt.crypt
 import salt.utils.crypt
 import salt.utils.stringutils
-from salt.exceptions import (
-    AuthenticationError,
-    SaltClientError,
-    SaltReqTimeoutError,
-    MasterExit,
-)
+from salt.exceptions import SaltClientError, SaltReqTimeoutError
 
 # Import third party libs
 try:
@@ -47,9 +41,7 @@ def _minion_sign_in_payload(id_):
     :return: Payload dictionary
     :rtype: dict
     """
-    payload = {}
-    payload["cmd"] = "_auth"
-    payload["id"] = id_
+    payload = {"cmd": "_auth", "id": id_}
     mpub = "minion_master.pub"
     token = salt.utils.stringutils.to_bytes(salt.crypt.Crypticle.generate_key_string())
     pub_path = os.path.join(__opts__["pki_dir"], "minion.pub")
@@ -71,7 +63,7 @@ def _minion_sign_in_payload(id_):
 def keys():
     """
     Send the salt master a collection of fake keys, these are use to populate the master's key
-    cache to facilitiate emulating many minions inside of this single minion
+    cache to facilitate emulating many minions inside of this single minion
     """
     channel = salt.transport.client.ReqChannel.factory(__opts__, crypt="clear")
 
@@ -79,10 +71,12 @@ def keys():
         for ind in range(__opts__.get("legion_fakes", 10)):
             id_ = "{}_{}".format(__opts__["id"], ind)
             sign_in_payload = _minion_sign_in_payload(id_)
-            payload = channel.send(sign_in_payload, tries=0, timeout=30,)
+            channel.send(
+                sign_in_payload, tries=0, timeout=30,
+            )
     except SaltReqTimeoutError as e:
         raise SaltClientError(
-            "Attempt to authenticate with the salt master failed with timeout error"
+            f"Attempt to authenticate with the salt master failed with timeout error: {e}",
         )
     finally:
         channel.close()
