@@ -1,10 +1,11 @@
 # Import python libs
 import logging
+import os
 
 # Import Salt Libs
 import salt.crypt
-import salt.transport.client
 import salt.serializers.msgpack
+import salt.transport.client
 
 log = logging.getLogger(__name__)
 
@@ -26,12 +27,17 @@ def returner(ret):
             "retcode": ret[u"retcode"],
             "success": ret[u"success"],
         }
+
         if __opts__["minion_sign_messages"]:
-            log.trace("Signing event to be published onto the bus.")
+            log.debug("Signing event to be published onto the bus.")
+
             minion_privkey_path = os.path.join(__opts__["pki_dir"], "minion.pem")
             sig = salt.crypt.sign_message(
                 minion_privkey_path, salt.serializers.msgpack.serialize(load)
             )
+
             load["sig"] = sig
-        master_ret = channel.send(load, timeout=30)
+
+        channel.send(load, timeout=30)
+
     channel.close()

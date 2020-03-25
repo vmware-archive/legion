@@ -1,10 +1,16 @@
-FROM saltstack/salt:3000
+FROM python:3.6-slim as builder
 
-RUN apk --no-cache add git
-RUN mkdir -p /opt/salt/legion
-WORKDIR /opt/salt/legion
+RUN mkdir /install
+WORKDIR /install
 
 COPY . .
-RUN python3 -m pip install .
+
+RUN apt-get update && \
+    apt-get install -y gcc && \
+    pip install --prefix=/install -r requirements.txt && \
+    pip install --prefix=/install .
+
+FROM python:3.6-slim
+COPY --from=builder /install /usr/local
 
 ENTRYPOINT ["legion"]
